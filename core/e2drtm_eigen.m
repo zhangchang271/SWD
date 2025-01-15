@@ -5,7 +5,7 @@
 %Born modeling by Zongcai Feng 2015-03-24
 %add parameter: vp_refl,vs_refl
 
-function [cl_img,cm_img,illum_div]=e2drtm_eigen(wavefield_gradient,seismo_w,is,nbc,nt,dtx,dx,dt,gx,gz,s,vp,vs,isfs,fsz,fd_order,parameter_type,dt_wf)
+function [cl_img,cm_img,illum_div]=e2drtm_eigen(wavefield_gradient,seismo_w,is,nbc,nt,dtx,dx,dt,gx,gz,s,vp,vs,isfs,fd_order,parameter_type,in_wf)
 
 
 
@@ -40,9 +40,7 @@ function [cl_img,cm_img,illum_div]=e2drtm_eigen(wavefield_gradient,seismo_w,is,n
 % Calculate lambda, mu based on density, p/s wave veolcity
 % ca: lambda+2*mu; cl:lambda; cm: mu
 %[ca,cm,cl]=calparam(vp,vs,den);
-if (nargin)<=17
-    dt_wf=dt;
-end
+
 [nz,nx]=size(vp);
 den=ones(nz,nx,'single');
 if parameter_type==0
@@ -52,15 +50,7 @@ if parameter_type==1
     ca=cl+2*cm;
 end
 
-cl_img=zeros(size(vp)); cm_img=zeros(size(vp)); illum_div=zeros(size(vp));%illum_curl=zeros(size(vp));
 
-% staggered grid finite difference coeffcients
-S21=1.0;
-S41=9.0/8.0;S42=-1.0/24.0;
-S61=1.17187;S62=-6.51042e-2;S63=4.68750e-3;
-S81=1.19629;S82=-7.97526e-2;S83=9.57031e-3;S84=-6.97545e-4;
-
-tic;
 
 ng=numel(gx);
 % pad means to expand the model space in order to add the absorbing
@@ -77,31 +67,14 @@ cl=pad(cl,nbc,isfs,pad_top);
 den=pad(den,nbc,isfs,pad_top);
 
 
-%Adjust source and receiver position because of free surface
-if (isfs)
-%     if (sz==fsz)
-%         sz=sz+1;
-%     end
-    if (gz==fsz)
-        gz=gz;
-    end
-end
 
 % change source/geophone position because of pad
 gx=gx+nbc;gz=gz+pad_top;
 
-if (isfs)
-    fsz=fsz+pad_top;
-end
 
 [nzbc,nxbc]=size(cm);
 
-%*_p means purturb wavefeld
-uu_b=zeros(nzbc,nxbc); % horizontal displacement wavefield
-ww_b=zeros(nzbc,nxbc); % vertical displacement wavefield
-xx_b=zeros(nzbc,nxbc); % tau_xx wavefield
-zz_b=zeros(nzbc,nxbc); % tau_zz wavefield
-xz_b=zeros(nzbc,nxbc); % tau_xz wavefield
+
 
 % calculate dt/dx/dens
 b=dtx./den;
@@ -144,7 +117,7 @@ end
 
 
 %Back propogate modeling  by Zongcai
-fd_order_num=fd_order;in_wf=dt_wf/dt;
+fd_order_num=fd_order;
 input_vector = [nt,nzbc,nxbc,dtx,ng,nbc,gz(1),gx(1),gx(2)-gx(1),fd_order_num,in_wf,nz,nx,dt];
 [cl_img,cm_img,illum_div] = eigen_e2drtm_single(input_vector,temp,ca,cl,cm,cm1,b,b1,seismo_w,wavefield_gradient.fux,wavefield_gradient.fuz,wavefield_gradient.bwx,wavefield_gradient.bwz);
 end

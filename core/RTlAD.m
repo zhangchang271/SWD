@@ -1,5 +1,5 @@
 %
- function [ml,dataLen,saveForBackward]=RTlAD(seismo_v1,is,df,dt,np,vmin,vmax,fmin,fmax,a,b,ds,offset,m,FK,M)
+ function [ml,dataLen,saveForBackward]=RTlAD(seismo_v1,is,df,dt,np,vmin,vmax,fmin,fmax,a,b,ds,offset,m,M)
 %Linear radon transform 
 %if is<=b-offset
   nend=M*is-M+1-offset-m;
@@ -12,9 +12,6 @@
   x=(m+linspace(0,offset-1,offset))*ds;
   
  %uxt=seismo_v1(:,round((M*is-M+1+m)):offset+m+(M*is-M+1));
- if FK==1% normalization
-  [uxt] = fk_filter(uxt, dt, ds);
- end
 %% 
 ccn=fix(1./df./dt);
 d=fft(uxt,ccn);
@@ -35,6 +32,6 @@ for luoi=lf:nf
 end
  ml=ml(:,lf:nf);
  uxtposl = nend+1:round((M*is-M+1-m));
- saveForBackward = struct('mm',mm,'ll0',ll0,'lf',lf,'nf',nf,'ccn',ccn,'mll',ml,'uxtposl',uxtposl);
+ saveForBackward = struct('mm',mm,'ll0',ll0,'lf',lf,'nf',nf,'ccn',ccn,'mll',ml1,'uxtposl',uxtposl);
  end
 % [maxpowr,idx]=max(ml(:,:));

@@ -1,5 +1,5 @@
 
-function [seismo_u,seismo_w,www]=staggerfd8(is,nbc,nt,dtx,dx,dt,sx,sz,gx,gz,s,vp,vs,isfs,fsz,fd_order,source_type,parameter_type,dt_wf,nt_wf)
+function [seismo_u,seismo_w,www]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx,sz,gx,gz,s,vp,vs,isfs,fd_order,source_type,parameter_type,in_wf)
 
 % INPUT
 % is:shot number
@@ -34,10 +34,6 @@ function [seismo_u,seismo_w,www]=staggerfd8(is,nbc,nt,dtx,dx,dt,sx,sz,gx,gz,s,vp
 % ca: lambda+2*mu; cl:lambda; cm: mu
 %[ca,cm,cl]=calparam(vp,vs,den);
 
-if (nargin)<=18
-    dt_wf=dt;
-    nt_wf=nt;
-end
 [nz,nx]=size(vs);
 den=single(ones(nz,nx));
 if parameter_type==0
@@ -47,22 +43,6 @@ end
 if parameter_type==1
     ca=cl+2*cm;
 end
-
-[nz,nx]=size(vp);
-%if (nargout)==3
-    wavefield_gradient.fux=zeros(nz,nx,nt_wf);
-    wavefield_gradient.fuz=zeros(nz,nx,nt_wf);
-    wavefield_gradient.bwx=zeros(nz,nx,nt_wf);
-    wavefield_gradient.bwz=zeros(nz,nx,nt_wf);
-%end
-
-% staggered grid finite difference coeffcients
-S21=1.0;
-S41=9.0/8.0;S42=-1.0/24.0;
-S61=1.17187;S62=-6.51042e-2;S63=4.68750e-3;
-S81=1.19629;S82=-7.97526e-2;S83=9.57031e-3;S84=-6.97545e-4;
-
-tic;
 
 ng=numel(gx);
 % pad means to expand the model space in order to add the absorbing
@@ -154,7 +134,7 @@ end
     elseif (strcmp(source_type,'w'))
         source_type_num=5;
     end
-fd_order_num=fd_order;in_wf=dt_wf/dt;format_num=3;%format_num: dim of wavefield.fux...
+fd_order_num=fd_order;format_num=3;%format_num: dim of wavefield.fux...
 input_vector = [nt,nzbc,nxbc,dtx,ng,sz,sx,gz(1),gx(1),gx(2)-gx(1),source_type_num,fd_order_num,in_wf,nz,nx,format_num];
 [seismo_u,seismo_w,www]= eigen_staggerfd_single(input_vector,temp,ca,cl,cm,cm1,b,b1,s);
 res2=seismo_w;

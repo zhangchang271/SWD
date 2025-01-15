@@ -1,5 +1,5 @@
 %
- function [ml,dataLen]=RTl(seismo_v1,is,df,dt,np,vmin,vmax,fmin,fmax,a,b,ds,offset,m,FK,M)
+ function [ml,dataLen]=RTl(seismo_v1,is,df,dt,np,vmin,vmax,fmin,fmax,a,b,ds,offset,m,M)
 %#######################################################################!
 %if is<=b-offset
   nend=M*is-M+1-offset-m;
@@ -10,11 +10,8 @@
   [~,dataLen] = size(uxt);
   offset=M*is-M+1-m-nend;
   x=(m+linspace(0,offset-1,offset))*ds;
-  
  %uxt=seismo_v1(:,round((M*is-M+1+m)):offset+m+(M*is-M+1));
- if FK==1% normalization
-  [uxt] = fk_filter(uxt, dt, ds);
- end
+
 %% 
 ccn=fix(1./df./dt);
 d=fft(uxt,ccn);

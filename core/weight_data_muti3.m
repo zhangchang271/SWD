@@ -14,7 +14,7 @@ maxoffset=b;
 
 if  is<=ns-floor(m/M)-round(w/M)
 deta_cc2=zeros(win,1);
-deta_cc2(ind:ind+npair-1) = fre'.*(cr_0-cr_pre_r)./(cr_0.*cr_pre_r).*line_mask_r;
+deta_cc2(ind:ind+npair-1) = fre'.*(cr_0-cr_pre_r)./(cr_0.*cr_pre_r);
     nend=m+offset-1+refsx(is);
     if nend>maxoffset
       nend=maxoffset;
@@ -70,7 +70,7 @@ clear deta_seismo_vv
 
 if is>round(w/M)+floor(m/M)+1
 deta_cc22 = zeros(win,1);
-deta_cc22(ind:ind+npair-1) = fre'.*(cr_0l-cr_pre_l)./(cr_0l.*cr_pre_l).*line_mask_l;
+deta_cc22(ind:ind+npair-1) = fre'.*(cr_0l-cr_pre_l)./(cr_0l.*cr_pre_l);
    nend=refsx(is)-offset-m;
   if nend<1
       nend=0;
