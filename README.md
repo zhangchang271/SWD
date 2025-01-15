@@ -8,10 +8,10 @@ The technique innovatively derives the gradient of the misfit function with resp
 SWD capitalizes on the concept of skeletonizing complex surface wave arrivals into simpler forms—specifically, picked dispersion curves in the phase-velocity and frequency domains, akin to wave-equation traveltime tomography. These dispersion curves are primarily obtained from Rayleigh waves captured by vertical-component geophones. The misfit function itself is defined as the sum of the squared differences between the wavenumbers of the predicted and observed dispersion curves, reflecting the method's refined approach to accurately capturing subsurface velocity structures.
 
 ## Key Features
-- **Multi-offset Method**: Utilizes a sequence from long to short offsets, updating long-wavelength information prior to shorter wavelengths, which enhances the inversion's effectiveness.
-- **C++ Acceleration**: Employs C++ for the acceleration of finite difference forward and inverse kernels, greatly enhancing computational efficiency.
-- **Elastic Wave Flat Surface Conditions**: Optimized for environments typical of elastic wave propagation over flat terrains, ensuring reliable and detailed analysis.
-- **Linear Radon Transform**: Uses the Linear Radon Transform for efficient extraction of dispersion curves, significantly improving the accuracy of phase velocity and frequency analysis.
+- Mid-high resolution compired to FWI.
+- No need to estiamte source wavelet.
+- Accelerated by C++: The finite difference forward and inverse kernels used in SWD are accelerated using C++.
+- Suitable for elastic wave and flat surface conditions.
 
 ## Usage
 run SWD.m
