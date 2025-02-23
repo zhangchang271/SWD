@@ -30,8 +30,8 @@ SWD is distributed under the GNU General Public License v3.0. See the `LICENSE` 
 
 ## Contact
 This program was written by Professor Li Jing's team from Jilin University. If you have any questions, please contact:
-- **Zhang Chang**: zhangchang23@mails.jlu.edu.cn
-[![Email](https://img.shields.io/badge/Email-zhangchang23@mails.jlu.edu.cn-blue)](mailto:zhangchang23@mails.jlu.edu.cn)  Jilin University, China
+- **Zhang Chang**: zhang.chang271@gmail.com
+[![Email](https://img.shields.io/badge/Email-zhang.chang271@gmail.com-blue)](mailto:zhang.chang271@gmail.com)  Jilin University, China
 - **Li Jing**: inter.lijing@gmail.com
   [![Email](https://img.shields.io/badge/Email-inter.lijing@gmail.com-red)](mailto:inter.lijing@gmail.com)   Jilin University, China
 
