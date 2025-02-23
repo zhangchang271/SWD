@@ -18,6 +18,10 @@ SWD capitalizes on the concept of skeletonizing complex surface wave arrivals in
 ## Usage
 run SWD.m
 
+The code switches between WD and SWD methods by calling different gradient calculation sub-functions:
+- **WD method**: call `weight_data_muti3` sub-function 
+- **SWD method**: call `ADWDgrad_1` sub-function (default)
+
 ## Result
 ![fig1.png](fig1.png)
 
@@ -25,6 +29,7 @@ run SWD.m
 SWD is distributed under the GNU General Public License v3.0. See the `LICENSE` file for more details.
 
 ## Contact
+This program was written by Professor Li Jing's team from Jilin University. If you have any questions, please contact:
 - **Zhang Chang**: zhangchang23@mails.jlu.edu.cn
 [![Email](https://img.shields.io/badge/Email-zhangchang23@mails.jlu.edu.cn-blue)](mailto:zhangchang23@mails.jlu.edu.cn)  Jilin University, China
 - **Li Jing**: inter.lijing@gmail.com
