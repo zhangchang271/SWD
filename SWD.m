@@ -142,9 +142,7 @@ end
 imagesc(seismo_v_d(:,:,1))
 [a,b]=size(seismo_v_d(:,:,1));  
 
-
 k =1;
-% [s,nw]=ricker(fr,dt,nt); s =single(s); % source wavelet
 
 while (k<=iteration)  
 tic;
@@ -189,7 +187,7 @@ parfor is=1:ns
     grad_outputr = cr_pre_r(:,is)-cr_0(:,is);
     grad_outputl = cr_pre_l(:,is)-cr_0l(:,is);
     %     [seismo_v_d1]=weight_data_muti3(seismo_v_d(:,:,is),seismo_v,is,dt,df,offset,dg,0,w,M,m,ns,refsx,win,np,vmin,vmax,fmin,fmax, ...
-    %     cr_0(:,is),cr_0l(:,is),cr_pre_r(:,is),cr_pre_l(:,is),FK,ind); Uncomment this line to enable the WD method
+    %     cr_0(:,is),cr_0l(:,is),cr_pre_r(:,is),cr_pre_l(:,is),FK,ind); Uncomment there two lines to enable the WD method
     [seismo_v_d1]=ADWDgrad_1(nt,ng,ns,npair,is,w,m,M,SoftArgNorm,grad_outputr,grad_outputl,space_M,saveForBackwardr,saveForBackwardl); Uncomment this line to enable the SWD method
     % [seismo_v_d1,res_r]=FWIresidual(seismo_v,seismo_v_d(:,:,is));
     [cl_img,cm_img,illum_div]=e2drtm_eigen(wavefield_gradient,single(seismo_v_d1),is,nbc,nt,dtx,dx,dt,gx,gz,s,vp,vs,isfs,fd_order,parameter_type,nt_wf);
