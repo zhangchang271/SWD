@@ -1,4 +1,4 @@
-function [seismo_v_d1,deta_c]=weight_data_muti3(seismo_v_d,seismo_v,is,dt,df,offset,dg,F1,w,M,m,ns,refsx,win,np,vmin,vmax,fmin,fmax,cr_0,cr_0l,cr_pre_r,cr_pre_l,FK,ind,line_mask_r,line_mask_l)
+function [seismo_v_d1,deta_c]=weight_data_muti3(seismo_v_d,seismo_v,is,dt,df,offset,dg,F1,w,M,m,ns,refsx,win,fmin,fmax,cr_0,cr_0l,cr_pre_r,cr_pre_l,ind)
 
 [nt,b]=size(seismo_v_d(:,:,1));
 fre=2*pi*linspace(fmin,fmax,(fmax-fmin)/df+1); 
