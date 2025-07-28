@@ -25,8 +25,8 @@
 % velocity structures.
 %
 % Developers:
-% Chang Zhang, Jilin University
-% Email: zhangchang23@mails.jlu.edu.cn
+% Zhang Chang, Jilin University
+% Email: zhang.chang271@gmail.com
 % QQ: 1208874615
 %
 % Jing Li, Jilin University
@@ -36,9 +36,9 @@
 %
 % 1. Mid-high resolution compired to FWI.
 % 2. No need to estiamte source wavelet.
-% 2. Accelerated by C++: The finite difference forward and inverse kernels used
+% 3. Accelerated by C++: The finite difference forward and inverse kernels used
 %    in SWD are accelerated using C++.
-% 3. Suitable for elastic wave and flat surface conditions.
+% 4. Suitable for elastic wave and flat surface conditions.
 %
 %
 % Usage:
@@ -76,15 +76,15 @@ vs_d = model8_2;
 
 [nz,nx]=size(vs_d);
 vs_d=single(vs_d);
+fr=30;
+dx=1;%dx=(min(vs_d(:))/fr/12);
+dt=dx/max(vp(:))*0.5;
 vsmin=min(vs_d(:));vsmax=max(vs_d(:));
 vs = zeros(nz,nx); % Initial model
 for i=1:nx
     vs(:,i)=linspace(vsmin,vsmax,nz);
 end
 vp=vs*1.732;  % vp is constant
-fr=30;
-dx=1;%dx=(min(vs_d(:))/fr/12);
-dt=dx/max(vp(:))*0.5;
 dtx=dt/dx;
 pickMethod=1;  %1==FDC 2==argmax
 nt_wf=5;  % Storage wave field interval
