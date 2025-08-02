@@ -11,16 +11,21 @@ SWD capitalizes on the concept of skeletonizing complex surface wave arrivals in
 ## Key Features
 - Mid-high resolution compared to FWI.
 - No need to estiamte source wavelet.
-- Accelerated by C++: The finite difference forward and inverse kernels used in SWD are accelerated using C++.
+- The finite difference forward and inverse kernels are accelerated by C++.
 - Suitable for elastic wave and flat surface conditions.
 
    
 ## Usage
-run SWD.m
+Both single-precision and double-precision versions are provided. Single-precision reduces memory requirements by half compared to double-precision, and the forward modeling speed is 5-10 times faster, but the inversion results may be slightly different each time.
 
-The code switches between WD and SWD methods by calling different gradient calculation sub-functions:
-- **WD method**: call `weight_data_muti3` sub-function 
-- **SWD method**: call `ADWDgrad_1` sub-function (default)
+SWD.m or SWD_single.m contains a model test, which are the double-precision and single-precision versions, respectively. 
+SWD.mlx is a MATLAB live script (similar to Jupyter) that details the intermediate steps of the SWD program. 
+The fieldexamples folder contains two field examples, including processed dispersion curves, the main run file, and an mlx file that explains parameter selection in detail.
+
+
+The code switches between WD and SWD methods by calling different gradient calculation functions:
+- **WD method**: call `weight_data_muti3` function 
+- **SWD method**: call `ADWDgrad_1` function (default)
 
 ## Result
 ![fig1.png](fig1.png)
@@ -29,7 +34,7 @@ The code switches between WD and SWD methods by calling different gradient calcu
 SWD is distributed under the GNU General Public License v3.0. See the `LICENSE` file for more details.
 
 ## Contact
-This program was written by Professor Li Jing's team from Jilin University. If you have any questions, please contact:
+This program was written by Zhang Chang under the supervision of Professor Li Jing from Jilin University. If you have any questions, please contact:
 - **Zhang Chang**: zhang.chang271@gmail.com
 [![Email](https://img.shields.io/badge/Email-zhang.chang271@gmail.com-blue)](mailto:zhang.chang271@gmail.com) Wechat: zc13604682616
 - **Li Jing**: inter.lijing@gmail.com
