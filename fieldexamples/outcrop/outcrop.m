@@ -82,7 +82,7 @@ dx=0.25;%dx=vsmin/fr/12; 150/30/12=0.4167
 dt=dx/vpmax*0.5;
 dtx=dt/dx;
 nz=40;nx=240;
-vs = zeros(nz,nx,'single'); % Initial model
+vs = zeros(nz,nx,'double'); % Initial model
 for i=1:nx
     vs(:,i)=linspace(150,700,nz);
 end
@@ -92,11 +92,11 @@ vp=vs*1.732;  % vp is constant
 pickMethod=1;  %1==FDC 2==argmax
 nt_wf=5;  % Storage wave field interval
 nt=floor((nx*dx/min(vs(:))/dt+1000)/10)*10+500;  % time step; Must be divisible by nt_wf
-[s,nw]=ricker(fr,dt,nt); s =single(s); % source wavelet
+[s,nw]=ricker(fr,dt,nt); s =double(s); % source wavelet
 nbc=40;   % boundary layer
 % define acquisition geometry
-ds=4; sx=single(1:ds:nx); sz=zeros(size(sx),'single')+1;[~,ns]=size(sx);
-dg=4;gx=single(1:dg:nx);  gz=zeros(size(gx),'single')+1;  ng=numel(gx);
+ds=4; sx=double(1:ds:nx); sz=zeros(size(sx),'double')+1;[~,ns]=size(sx);
+dg=4;gx=double(1:dg:nx);  gz=zeros(size(gx),'double')+1;  ng=numel(gx);
 M=ds/dg;refsx=floor(sx/dg)+1;
 dg=dg*dx;  % Randon Transform need real distance
 % Set papramters 
@@ -194,7 +194,7 @@ parfor is=1:ns
     [seismo_v_d1]=ADWDgrad_1(nt,ng,ns,npair,is,w,m,M,SoftArgNorm,grad_outputr,grad_outputl,space_M,saveForBackwardr,saveForBackwardl);% Uncomment this line to enable the SWD method
     end
     %     [seismo_v_d1,res_r]=FWIresidual(seismo_v,seismo_v_d(:,:,is));
-    [cl_img,cm_img,illum_div]=e2drtm_eigen(wavefield_gradient,single(seismo_v_d1),is,nbc,nt,dtx,dx,dt,gx,gz,s,vp,vs,isfs,fd_order,parameter_type,nt_wf);
+    [cl_img,cm_img,illum_div]=e2drtm_eigen(wavefield_gradient,double(seismo_v_d1),is,nbc,nt,dtx,dx,dt,gx,gz,s,vp,vs,isfs,fd_order,parameter_type,nt_wf);
     g_cl = g_cl+cl_img;g_cm = g_cm+cm_img;g_illum = g_illum+illum_div;
 end
 
@@ -203,7 +203,7 @@ display(['residual = ',num2str( residual(k) ),' k=',num2str(k)]);
 res0=residual(k); 
 g_cl=g_cl./g_illum;g_cm=g_cm./g_illum;
 dk_vs = -4*vs.*g_cl+2*vs.*g_cm;
-dk_vs=single(smooth2a(double(dk_vs),smoothZ,smoothX));  % Smooth the Vs gradient
+dk_vs=double(smooth2a(double(dk_vs),smoothZ,smoothX));  % Smooth the Vs gradient
 
 if k==1
     f1=0.5;
