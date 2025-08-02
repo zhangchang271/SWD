@@ -35,7 +35,7 @@ function [seismo_u,seismo_w,www]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx,sz,gx,gz
 %[ca,cm,cl]=calparam(vp,vs,den);
 
 [nz,nx]=size(vs);
-den=single(ones(nz,nx));
+den=double(ones(nz,nx));
 if parameter_type==0
     [ca,cm,cl]=calparam(vp,vs,den);
 % [cl,cm] = calepara(vs,den,vp);
@@ -67,7 +67,7 @@ gx=gx+nbc;gz=gz+pad_top;
 
 
 [nzbc,nxbc]=size(cm);
-nzbc=single(nzbc);nxbc=single(nxbc);
+nzbc=double(nzbc);nxbc=double(nxbc);
 % allocate the size of the output
 seismo_u=zeros(nt,ng);
 seismo_w=zeros(nt,ng);
@@ -88,7 +88,7 @@ bwz=zeros(nzbc,nxbc);
 % damp is used in the absorbing boundary condition
 vmin=min(min(vp(:),vs(:)));
 damp=damp_circle(vmin,nzbc,nxbc,nbc,dx,isfs,pad_top);
-temp=single(1-damp*dt);
+temp=double(1-damp*dt);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Such scheme is abandoned.
@@ -136,7 +136,9 @@ end
     end
 fd_order_num=fd_order;format_num=3;%format_num: dim of wavefield.fux...
 input_vector = [nt,nzbc,nxbc,dtx,ng,sz,sx,gz(1),gx(1),gx(2)-gx(1),source_type_num,fd_order_num,in_wf,nz,nx,format_num];
-[seismo_u,seismo_w,www]= eigen_staggerfd_single(input_vector,temp,ca,cl,cm,cm1,b,b1,s);
+% [seismo_u,seismo_w,www]= eigen_staggerfd_double(input_vector,temp,ca,cl,cm,cm1,b,b1,s);
+[seismo_u,seismo_w,www]= eigen_staggerfd_double(input_vector,temp,ca,cl,cm,cm1,b,b1,s);
+
 res2=seismo_w;
 %display(num2str(is),'th shot');
 end

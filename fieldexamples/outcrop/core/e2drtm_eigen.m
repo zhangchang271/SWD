@@ -42,7 +42,7 @@ function [cl_img,cm_img,illum_div]=e2drtm_eigen(wavefield_gradient,seismo_w,is,n
 %[ca,cm,cl]=calparam(vp,vs,den);
 
 [nz,nx]=size(vp);
-den=ones(nz,nx,'single');
+den=ones(nz,nx,'double');
 if parameter_type==0
     [ca,cm,cl]=calparam(vp,vs,den);
 end
@@ -81,7 +81,7 @@ b=dtx./den;
 % damp is used in the absorbing boundary condition
 vmin=min(min(vp(:),vs(:)));
 damp=damp_circle(vmin,nzbc,nxbc,nbc,dx,isfs,pad_top);
-temp=single(1-damp*dt);
+temp=double(1-damp*dt);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Such scheme is abandoned.
@@ -119,5 +119,5 @@ end
 %Back propogate modeling  by Zongcai
 fd_order_num=fd_order;
 input_vector = [nt,nzbc,nxbc,dtx,ng,nbc,gz(1),gx(1),gx(2)-gx(1),fd_order_num,in_wf,nz,nx,dt];
-[cl_img,cm_img,illum_div] = eigen_e2drtm_single(input_vector,temp,ca,cl,cm,cm1,b,b1,seismo_w,wavefield_gradient.fux,wavefield_gradient.fuz,wavefield_gradient.bwx,wavefield_gradient.bwz);
+[cl_img,cm_img,illum_div] = eigen_e2drtm_double(input_vector,temp,ca,cl,cm,cm1,b,b1,seismo_w,wavefield_gradient.fux,wavefield_gradient.fuz,wavefield_gradient.bwx,wavefield_gradient.bwz);
 end

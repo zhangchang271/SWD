@@ -76,7 +76,7 @@ if is>=round(w/M)+floor(m/M)+1
     a_data_res(:,uxtposl(1:end-1)) = graduxtl(end:-1:2,:)';
 end
 
-% a_data_res = a_data_res./max(abs(a_data_res(:)));
+a_data_res = a_data_res./max(abs(a_data_res(:)));
 
 end
 
