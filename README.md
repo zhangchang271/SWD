@@ -18,8 +18,10 @@ SWD capitalizes on the concept of skeletonizing complex surface wave arrivals in
 ## Usage
 Both single-precision and double-precision versions are provided. Single-precision reduces memory requirements by half compared to double-precision, and the forward modeling speed is 5-10 times faster, but the inversion results may be slightly different each time.
 
-SWD.m or SWD_single.m contains a model test, which are the double-precision and single-precision versions, respectively. 
+SWD.m or SWD_single.m contains a model test, which are the double-precision and single-precision versions, respectively.
+
 SWD.mlx is a MATLAB live script (similar to Jupyter) that details the intermediate steps of the SWD program. 
+
 The fieldexamples folder contains two field examples, including processed dispersion curves, the main run file, and an mlx file that explains parameter selection in detail.
 
 
