@@ -8,6 +8,8 @@ The technique innovatively derives the gradient of the misfit function with resp
 
 SWD capitalizes on the concept of skeletonizing complex surface wave arrivals into simpler forms—specifically, picked dispersion curves in the phase-velocity and frequency domains, akin to wave-equation traveltime tomography. These dispersion curves are primarily obtained from Rayleigh waves captured by vertical-component geophones. The misfit function itself is defined as the sum of the squared differences between the wavenumbers of the predicted and observed dispersion curves, reflecting the method's refined approach to accurately capturing subsurface velocity structures.
 
+Link to this repository: https://github.com/zhangchang271/SWD
+
 ## Key Features
 - Mid-high resolution compared to FWI.
 - No need to estiamte source wavelet.
