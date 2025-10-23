@@ -47,4 +47,6 @@ This program was written by Zhang Chang under the supervision of Professor Li Ji
 ## Citation
 If you use this package in your own research, please cite the following papers:
 
-- Zhang, C., J. Li, and H. Cao, 2024, Skeletonized wave-equation dispersion spectrum inversion: GEOPHYSICS (under review)
+Skeletonized wave-equation dispersion spectrum inversion
+Chang Zhang, jing li, Sherif Hanafy, Hui Liu, Lige Bai, Huaqing Cao, and Yibo Wang
+GEOPHYSICS 0 0:ja, 1-46
