@@ -50,3 +50,4 @@ If you use this package in your own research, please cite the following papers:
 Skeletonized wave-equation dispersion spectrum inversion
 Chang Zhang, jing li, Sherif Hanafy, Hui Liu, Lige Bai, Huaqing Cao, and Yibo Wang
 GEOPHYSICS 0 0:ja, 1-46
+https://doi.org/10.1190/geo-2024-0762
