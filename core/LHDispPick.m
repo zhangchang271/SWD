@@ -9,6 +9,6 @@ function [res,cr_pre] = LHDispPick(ml,vmin,cr_0,method,ini)
         cr_pre = p_max + vmin;
 
     end
-    res = mean(((cr_pre - cr_0).^2));
-    
+    res = mean(((cr_pre - cr_0).^2),'omitnan');
+    res(isnan(res)) = 0;
 end

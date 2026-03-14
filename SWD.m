@@ -76,6 +76,7 @@ vs_d = model8_2;
 vsmin=min(vs_d(:));vsmax=max(vs_d(:));
 vpmin=vsmin*1.732;vpmax=vsmax*1.732;
 [nz,nx]=size(vs_d);
+vs_d=single(vs_d);
 vs = zeros(nz,nx); % Initial model
 for i=1:nx
     vs(:,i)=linspace(vsmin,vsmax,nz);
@@ -88,11 +89,11 @@ dtx=dt/dx;
 pickMethod=1;  %1==FDC 2==argmax
 nt_wf=5;  % Storage wave field interval
 nt=floor((nx*dx/vsmin/dt+1000)/10)*10-500;  % time step; Must be divisible by nt_wf
-[s,nw]=ricker(fr,dt,nt); s =s; % source wavelet
+[s,nw]=ricker(fr,dt,nt); s =single(s); % source wavelet
 nbc=40;   % boundary layer
 % define acquisition geometry
-ds=6; sx=1:ds:nx; sz=zeros(size(sx))+1;[~,ns]=size(sx);
-dg=2;gx=1:dg:nx;  gz=zeros(size(gx))+1;  ng=numel(gx);
+ds=6; sx=single(1:ds:nx); sz=zeros(size(sx),'single')+1;[~,ns]=size(sx);
+dg=2;gx=single(1:dg:nx);  gz=zeros(size(gx),'single')+1;  ng=numel(gx);
 M=ds/dg;refsx=floor(sx/dg)+1;
 dg=dg*dx;  % Randon Transform need real distance
 % Set papramters 
@@ -136,7 +137,7 @@ for i =1:npair
 end
 
 parfor is=1:ns
-    [~,seismo_v_d(:,:,is)]=staggerfd_eigend(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs_d,isfs,fd_order,source_type,parameter_type,nt_wf);  
+    [~,seismo_v_d(:,:,is)]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs_d,isfs,fd_order,source_type,parameter_type,nt_wf);  
 end
 imagesc(seismo_v_d(:,:,1))
 [a,b]=size(seismo_v_d(:,:,1));  
@@ -169,7 +170,7 @@ g_illum=zeros(nz,nx);
 %% 
 
 parfor is=1:ns
-    [~,seismo_v,wavefield_gradient]=staggerfd_eigend(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs,isfs,fd_order,source_type,parameter_type,nt_wf);
+    [~,seismo_v,wavefield_gradient]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs,isfs,fd_order,source_type,parameter_type,nt_wf);
     saveForBackwardr = 0;
     saveForBackwardl = 0;
     if is<=ns-floor(m/M)-round(w/M)
@@ -189,7 +190,7 @@ parfor is=1:ns
 %         cr_0(:,is),cr_0l(:,is),cr_pre_r(:,is),cr_pre_l(:,is),ind);% Uncomment there two lines to enable the WD method
     [seismo_v_d1]=ADWDgrad_1(nt,ng,ns,npair,is,w,m,M,SoftArgNorm,grad_outputr,grad_outputl,space_M,saveForBackwardr,saveForBackwardl);% Uncomment this line to enable the SWD method
     % [seismo_v_d1,res_r]=FWIresidual(seismo_v,seismo_v_d(:,:,is));
-    [cl_img,cm_img,illum_div]=e2drtm_eigend(wavefield_gradient,seismo_v_d1,is,nbc,nt,dtx,dx,dt,gx,gz,s,vp,vs,isfs,fd_order,parameter_type,nt_wf);
+    [cl_img,cm_img,illum_div]=e2drtm_eigen(wavefield_gradient,single(seismo_v_d1),is,nbc,nt,dtx,dx,dt,gx,gz,s,vp,vs,isfs,fd_order,parameter_type,nt_wf);
     g_cl = g_cl+cl_img;g_cm = g_cm+cm_img;g_illum = g_illum+illum_div;
 end
 
@@ -198,7 +199,7 @@ display(['residual = ',num2str( residual(k) ),' k=',num2str(k)]);
 res0=residual(k); 
 g_cl=g_cl./g_illum;g_cm=g_cm./g_illum;
 dk_vs = -4*vs.*g_cl+2*vs.*g_cm;
-dk_vs=smooth2a(dk_vs,smoothZ,smoothX);  % Smooth the Vs gradient
+dk_vs=single(smooth2a(double(dk_vs),smoothZ,smoothX));  % Smooth the Vs gradient
 
 if k==1
     f1=0.5;
@@ -213,7 +214,7 @@ vs1(vs1<vsmin)=vsmin;vs1(vs1>vsmax)=vsmax;
 %% 
 
 parfor is=1:ns
-    [~,seismo_v,~]=staggerfd_eigend(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf);
+    [~,seismo_v,~]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf);
     if is<=ns-floor(m/M)-round(w/M)
         [mlr,dataLen]=RTr(seismo_v,is,df,dt,np,vmin,vmax,fmin,fmax,a,b,dg,offset,m,M); % Cal. the predicetd data dispersion curve for two sides 
         [res_r(is),cr_pre_r(:,is)] = LHDispPick(mlr,vmin,cr_0(:,is),pickMethod,ini);
@@ -239,7 +240,7 @@ if res1>res0
         
         
         parfor is=1:ns
-            [~,seismo_v,~]=staggerfd_eigend(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf);
+            [~,seismo_v,~]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf);
             if is<=ns-floor(m/M)-round(w/M)
                 [mlr,dataLen]=RTr(seismo_v,is,df,dt,np,vmin,vmax,fmin,fmax,a,b,dg,offset,m,M); % Cal. the predicetd data dispersion curve for two sides 
                 [res_r(is),cr_pre_r(:,is)] = LHDispPick(mlr,vmin,cr_0(:,is),pickMethod,ini);
@@ -262,7 +263,7 @@ else
     %% 
     
     parfor is=1:ns
-        [~,seismo_v,~]=staggerfd_eigend(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf);
+        [~,seismo_v,~]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf);
         if is<=ns-floor(m/M)-round(w/M)
             [mlr,dataLen]=RTr(seismo_v,is,df,dt,np,vmin,vmax,fmin,fmax,a,b,dg,offset,m,M); % Cal. the predicetd data dispersion curve for two sides 
             [res_r(is),cr_pre_r(:,is)] = LHDispPick(mlr,vmin,cr_0(:,is),pickMethod,ini);
@@ -290,7 +291,7 @@ vs1(vs1<vsmin)=vsmin;vs1(vs1>vsmax)=vsmax;
 %% 
 
 parfor is=1:ns
-    [~,seismo_v,~]=staggerfd_eigend(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf);
+    [~,seismo_v,~]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf);
     if is<=ns-floor(m/M)-round(w/M)
         [mlr,dataLen]=RTr(seismo_v,is,df,dt,np,vmin,vmax,fmin,fmax,a,b,dg,offset,m,M); % Cal. the predicetd data dispersion curve for two sides 
         [res_r(is),cr_pre_r(:,is)] = LHDispPick(mlr,vmin,cr_0(:,is),pickMethod,ini);

@@ -1,5 +1,7 @@
-function [a_data_res] = ADWDgrad_1(nt,ng,ns,npair,is,w,m,M,SoftArgNorm,grad_outputr,grad_outputl,space_M,saveForBackwardr,saveForBackwardl)
+function [a_data_res] = ADWDgrad_w(nt,ng,npair,w,SoftArgNorm,grad_outputr,grad_outputl,space_M,saveForBackwardr,saveForBackwardl)
 % back propagation wavelet
+grad_outputr(isnan(grad_outputr))=0;
+grad_outputl(isnan(grad_outputl))=0;
 
 a_data_res = zeros(nt,ng);
 % ll0: Spatial position matrix, depending only on gx and frequency range
@@ -9,14 +11,13 @@ a_data_res = zeros(nt,ng);
 % offsetr: length of CSG
 % mlr: dispersion spectrum
 % mmr: dispersion spectrum
-
-if is<=ns-floor(m/M)-round(w/M)
+uxtposr = saveForBackwardr.uxtposr;
+offsetr = sum(uxtposr);
+if offsetr>=w
     ll0 = saveForBackwardr.ll0;%Loading Variables from the forward Process
     lf = saveForBackwardr.lf;
     nf = saveForBackwardr.nf;
     ccn = saveForBackwardr.ccn;
-    uxtposr = saveForBackwardr.uxtposr;
-    offsetr = sum(uxtposr);
     mlr = saveForBackwardr.mlr;
     mlr = (mlr).^(1/40);
     mmr = saveForBackwardr.mm;
@@ -44,13 +45,13 @@ if is<=ns-floor(m/M)-round(w/M)
     a_data_res(:,uxtposr) = graduxtr';
 end
 
-if is>=round(w/M)+floor(m/M)+1 
+uxtposl = saveForBackwardl.uxtposl;
+offsetl = sum(uxtposl);
+if offsetl>=w
     ll0 = saveForBackwardl.ll0;
     lf = saveForBackwardl.lf;
     nf = saveForBackwardl.nf;
     ccn = saveForBackwardl.ccn;
-    uxtposl = saveForBackwardl.uxtposl;
-    offsetl = sum(uxtposl);
     mll = saveForBackwardl.mll;
     mll = mll.^(1/40);
     mml = saveForBackwardl.mm;
@@ -77,6 +78,6 @@ if is>=round(w/M)+floor(m/M)+1
 end
 
 % a_data_res = a_data_res./max(abs(a_data_res(:)));
-
+a_data_res(isnan(a_data_res))=0;
 end
 
