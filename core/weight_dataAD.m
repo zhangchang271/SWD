@@ -1,90 +1,58 @@
-function [seismo_v_d1]=weight_dataAD(seismo_v,dt,dx,df,offset,sx,gx,w,fmin,fmax,cr_0,cr_0l,cr_pre_r,cr_pre_l)
+function seismo_v_d1 = weight_dataAD(seismo_v,dt,dx,df,offset,sx,gx,min_traces, ...
+    fmin,fmax,cr_0,cr_0l,cr_pre_r,cr_pre_l)
+%WEIGHT_DATAAD Build the WD adjoint data from physical offset distances.
+%
+% The receiver selection is shared with RTrADx/RTlADx through
+% OFFSET_TRACES.  OFFSET is expressed in the same physical unit as DX.
 
+[nt,ng] = size(seismo_v);
+seismo_v_d1 = zeros(nt,ng);
 
+frequency = 2*pi*(fmin:df:fmax)';
+first_frequency = round(fmin/df)+1;
+npair = numel(frequency);
+ntpad = floor(1/dt/df);
+win = npair + 2*first_frequency;
 
-[nt,ng]=size(seismo_v);
-seismo_v_d1=zeros(nt,ng); % Define the backprogate data
-
-fre=2*pi*linspace(fmin,fmax,(fmax-fmin)/df+1); 
-freq=(fmin:df:fmax);   
-ind=fmin/df+1;
-npair=length(freq);
-win=npair+2*ind;
- %% Calcuate the weight source
- ntpad=floor(1/dt/df);
- %spad=zeros(ntpad);  
- % Caluate the weight residual data
-
-xp = (gx-sx)*dx;
-rightdata = xp>0;
-xp = xp(rightdata);
-rangeoffset = xp<=offset;
-x = xp(rangeoffset);
-y = x(:)';
-uxtposr = rightdata&(abs((sx-gx)*dx)<=offset);
-offsetr = sum(uxtposr);
-if offsetr>=w
-    deta_cc2=zeros(win,1);
-    deta_cc2(ind:ind+npair-1) = fre'.*(cr_0-cr_pre_r)./(cr_0.*cr_pre_r);
-    deta_cc2(isnan(deta_cc2))=0;
-    tempdata=zeros(ntpad,offsetr);
-
-    tempdata(1:nt,:)=seismo_v(:,uxtposr);    
-
-    deta_seismo_v1(:,1:offsetr)=fft(tempdata); %TRansform shot gather to FK domain
-    y1(:)=deta_cc2(:); % Define the delta k
-    
-    for ii=1:offsetr
-
-         deta_seismo_v4(:,ii)=(-1i*y1(:)*y(ii))/pi/2;   %% predicted data
-
-    end
-
-    for omega=1:win
-        deta_seismo_v1(omega+1,:)=deta_seismo_v1(omega+1,:).*deta_seismo_v4(omega,:);
-        deta_seismo_v1(ntpad+1-omega,:)=conj(deta_seismo_v1(omega+1,:));
-    end
-    deta_seismo_vv=(ifft(deta_seismo_v1(:,:)));
-    seismo_v_d1(:,uxtposr)=deta_seismo_vv(1:nt,1:offsetr);
- 
+[right_data,~,right_mask,right_distance] = ...
+    offset_traces(seismo_v,gx,sx,dx,offset,'right');
+if sum(right_mask) >= min_traces
+    residual = zeros(win,1);
+    residual(first_frequency:first_frequency+npair-1) = ...
+        frequency .* (cr_0-cr_pre_r) ./ (cr_0.*cr_pre_r);
+    residual(isnan(residual)) = 0;
+    seismo_v_d1(:,right_mask) = apply_weight( ...
+        right_data,right_distance,residual,nt,ntpad);
 end
 
-
-
-%% Left side part
-xp = (sx-gx)*dx;
-leftdata = xp>0;
-xp = xp(leftdata);
-rangeoffset = xp<=offset;
-x1 = xp(rangeoffset);
-y = (x1)';
-uxtposl = leftdata&(abs((sx-gx)*dx)<=offset);
-offsetl = sum(uxtposl);
-
-if offsetl>=w
-    deta_cc22 = zeros(win,1);
-    deta_cc22(ind:ind+npair-1) = fre'.*(cr_0l-cr_pre_l)./(cr_0l.*cr_pre_l);
-    deta_cc22(isnan(deta_cc22))=0;
-
-    tempdata=zeros(ntpad,offsetl);
-
-    tempdata(1:nt,:)=seismo_v(:,uxtposl);  
-
-    deta_seismo_v11(:,1:offsetl)=fft(tempdata); %TRansform shot gather to FK domain
-    y1(:)=deta_cc22(:); % Define the delta k
-    
-    for ii=1:offsetl
-        deta_seismo_v44(:,ii)=(-1i*y1(:)*y(ii))/pi/2;   %% predicted data
-
-    end
-
-    for omega=1:win
-        deta_seismo_v11(omega+1,:)=deta_seismo_v11(omega+1,:).*deta_seismo_v44(omega,:);
-        deta_seismo_v11(ntpad+1-omega,:)=conj(deta_seismo_v11(omega+1,:));
-    end
-    
-   deta_seismo_vv=(ifft(deta_seismo_v11(:,:)));
-   seismo_v_d1(:,uxtposl)=deta_seismo_vv(1:nt,1:offsetl);
+[left_data,~,left_mask,left_distance] = ...
+    offset_traces(seismo_v,gx,sx,dx,offset,'left');
+if sum(left_mask) >= min_traces
+    residual = zeros(win,1);
+    residual(first_frequency:first_frequency+npair-1) = ...
+        frequency .* (cr_0l-cr_pre_l) ./ (cr_0l.*cr_pre_l);
+    residual(isnan(residual)) = 0;
+    weighted_left = apply_weight(left_data,left_distance,residual,nt,ntpad);
+    seismo_v_d1(:,left_mask) = weighted_left(:,end:-1:1);
 end
-%clear deta_seismo_vv deta_seismo_v1 deta_seismo_v11 deta_seismo_v4 deta_seismo_v44 deta_cc deta_cc1 y y1 tempdata
+end
+
+function weighted_data = apply_weight(data,distance,residual,nt,ntpad)
+% Apply the frequency-domain wavenumber perturbation to one side.
+
+offset_count = numel(distance);
+tempdata = zeros(ntpad,offset_count);
+tempdata(1:nt,:) = data;
+spectrum = fft(tempdata);
+kernel = (-1i/pi/2) * (residual * distance(:)');
+
+for frequency_index = 1:numel(residual)
+    positive_index = frequency_index + 1;
+    negative_index = ntpad + 1 - frequency_index;
+    spectrum(positive_index,:) = spectrum(positive_index,:) .* kernel(frequency_index,:);
+    spectrum(negative_index,:) = conj(spectrum(positive_index,:));
+end
+
+weighted_data = ifft(spectrum);
+weighted_data = weighted_data(1:nt,:);
 end

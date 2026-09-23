@@ -18,18 +18,20 @@ Link to this repository: https://github.com/zhangchang271/SWD
 
    
 ## Usage
-Both single-precision and double-precision versions are provided. Single-precision reduces memory requirements by half compared to double-precision, and the forward modeling speed is 5-10 times faster, but the inversion results may be slightly different each time.
+Run `SWD.m` for the model test. It launches `SWD_distance.m`, the current physical-distance workflow. `SWD_distance.m` uses the source and receiver coordinates together with `dx` and `offset`; it does not convert the offset window through `M`, `m`, or shot-index boundary formulas.
 
-SWD.m or SWD_single.m contains a model test, which are the double-precision and single-precision versions, respectively.
+`SWD_legacy.m` preserves the former index-window implementation for comparison. `SWD_single.m` is the original single-precision example.
 
 SWD.mlx is a MATLAB live script (similar to Jupyter) that details the intermediate steps of the SWD program. 
 
 The fieldexamples folder contains two field examples, including processed dispersion curves, the main run file, and an mlx file that explains parameter selection in detail.
 
 
-The code switches between WD and SWD methods by calling different gradient calculation functions:
-- **WD method**: call `weight_data_muti3` function 
-- **SWD method**: call `ADWDgrad_1` function (default)
+The distance workflow switches between WD and SWD by changing one call in `SWD_distance.m`:
+- **WD method (default)**: call `weight_dataAD`, which uses physical source-receiver distances.
+- **SWD method**: uncomment the `ADWDgrad_w` call. Its Radon helpers return logical receiver masks in the original gather order.
+
+The distance-aware Radon functions are `core/RTrADx.m` and `core/RTlADx.m`. Receiver selection is shared by these functions and `core/weight_dataAD.m` through `core/offset_traces.m`.
 
 ## Result
 ![fig1.png](fig1.png)
