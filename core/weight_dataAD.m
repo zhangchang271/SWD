@@ -14,35 +14,45 @@ npair = numel(frequency);
 ntpad = floor(1/dt/df);
 win = npair + 2*first_frequency;
 
-sides = {'right','left'};
-observed = [cr_0(:),cr_0l(:)];
-predicted = [cr_pre_r(:),cr_pre_l(:)];
-for side = 1:2
-    [data,trace_index,~,distance] = ...
-        offset_traces(seismo_v,gx,sx,dx,offset,sides{side});
-    if numel(trace_index) < min_traces
-        continue
-    end
-
+[right_data,~,right_mask,right_distance] = ...
+    offset_traces(seismo_v,gx,sx,dx,offset,'right');
+if sum(right_mask) >= min_traces
     residual = zeros(win,1);
     residual(first_frequency:first_frequency+npair-1) = ...
-        frequency .* (observed(:,side)-predicted(:,side)) ./ ...
-        (observed(:,side).*predicted(:,side));
+        frequency .* (cr_0-cr_pre_r) ./ (cr_0.*cr_pre_r);
     residual(isnan(residual)) = 0;
-
-    tempdata = zeros(ntpad,numel(trace_index));
-    tempdata(1:nt,:) = data;
-    spectrum = fft(tempdata);
-    kernel = (-1i/pi/2) * (residual * distance(:)');
-
-    for frequency_index = 1:numel(residual)
-        positive_index = frequency_index + 1;
-        negative_index = ntpad + 1 - frequency_index;
-        spectrum(positive_index,:) = spectrum(positive_index,:) .* kernel(frequency_index,:);
-        spectrum(negative_index,:) = conj(spectrum(positive_index,:));
-    end
-
-    weighted_data = ifft(spectrum);
-    seismo_v_d1(:,trace_index) = weighted_data(1:nt,:);
+    seismo_v_d1(:,right_mask) = apply_weight( ...
+        right_data,right_distance,residual,nt,ntpad);
 end
+
+[left_data,~,left_mask,left_distance] = ...
+    offset_traces(seismo_v,gx,sx,dx,offset,'left');
+if sum(left_mask) >= min_traces
+    residual = zeros(win,1);
+    residual(first_frequency:first_frequency+npair-1) = ...
+        frequency .* (cr_0l-cr_pre_l) ./ (cr_0l.*cr_pre_l);
+    residual(isnan(residual)) = 0;
+    weighted_left = apply_weight(left_data,left_distance,residual,nt,ntpad);
+    seismo_v_d1(:,left_mask) = weighted_left(:,end:-1:1);
+end
+end
+
+function weighted_data = apply_weight(data,distance,residual,nt,ntpad)
+% Apply the frequency-domain wavenumber perturbation to one side.
+
+offset_count = numel(distance);
+tempdata = zeros(ntpad,offset_count);
+tempdata(1:nt,:) = data;
+spectrum = fft(tempdata);
+kernel = (-1i/pi/2) * (residual * distance(:)');
+
+for frequency_index = 1:numel(residual)
+    positive_index = frequency_index + 1;
+    negative_index = ntpad + 1 - frequency_index;
+    spectrum(positive_index,:) = spectrum(positive_index,:) .* kernel(frequency_index,:);
+    spectrum(negative_index,:) = conj(spectrum(positive_index,:));
+end
+
+weighted_data = ifft(spectrum);
+weighted_data = weighted_data(1:nt,:);
 end
