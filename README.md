@@ -27,6 +27,15 @@ Continue supplying positions through `sx/sz` and `gx/gz`, including fractional c
 
 The deformed grid uses the existing default `fd_order=22`, `source_type='w'`, and `isfs=1`. Its time step is adjusted internally for the grid deformation. The original uniform flat-grid stencils remain available at orders 22, 24, 26, and 28.
 
+`SWD.m` prepares the fixed grid, receiver positions, and propagation settings once in `grid`. Each shot then uses:
+
+```matlab
+[u,w,forward] = staggerfd_eigen(vp,vs,s,sx,sz,grid);
+[g_lambda,g_mu,illum] = e2drtm_eigen(single(residual),forward);
+```
+
+The output order remains horizontal data, vertical data, and the information needed by the corresponding adjoint call. A forward-only call uses `[u,w]`. The source length determines the number of time steps; model and grid settings are passed internally from forward to adjoint propagation.
+
 Wavefield reconstruction is automatic. Forward propagation saves the final state and a thin boundary strip, then reconstructs the source field alongside the adjoint. Boundary records use an internal temporary file, removed after the corresponding adjoint call; full volume snapshots are no longer stored through time. `nt_wf` retains its role as the gradient accumulation interval. No reconstruction switch is needed.
 
 `SWD.m` builds its two active MEX kernels before starting parallel workers. A configured MATLAB C++ compiler and Eigen 3 headers are required (`/usr/include/eigen3`, or `core/eigen3`). These kernels are built locally because their interface now includes the fixed grid and reconstruction data.

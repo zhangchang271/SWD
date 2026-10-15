@@ -1,7 +1,6 @@
-function [temp,ca,cl,cm,b]=fd_model(vp,vs,nbc,dx,dt,isfs,fd_order,parameter_type)
+function [temp,ca,cl,cm,b]=fd_model(vp,vs,nbc,dx,dt,isfs,fd_order)
 % Material padding and sponge shared by forward and adjoint propagation.
 % Original elastic modeling: Bowen Guo (2014), Zongcai Feng (2015).
-assert(parameter_type==0,'SWD:Material','This interface takes vp and vs.');
 validateattributes(vs,{'numeric'},{'real','finite','positive','2d'});
 validateattributes(vp,{'numeric'},{'real','finite','positive','size',size(vs)});
 [ca,cm,cl]=calparam(vp,vs,ones(size(vs),'single'));

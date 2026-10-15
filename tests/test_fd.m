@@ -6,9 +6,10 @@ build_mex;
 f=load(fullfile(root,'tests','fixtures','flat_reference.mat'));
 [nz,nx]=size(f.vs); nbc=f.nbc; dx=f.dx; nt=f.nt;
 vp=f.vp; vs=f.vs; dt=f.dt; s=f.s;
-[u,w,tape]=staggerfd_eigen(1,nbc,nt,dt/dx,dx,dt,f.sx,f.sz,f.gx,f.gz,s,vp,vs,1,22,'w',0,5);
+flat=fd_grid(zeros(1,nx),f.gx,f.gz,[nz,nx],nbc,dx,dt,1,22,'w',5);
+[u,w,tape]=staggerfd_eigen(vp,vs,s,f.sx,f.sz,flat);
 path=tape.boundary_file; assert(isfile(path));
-[gl,gm,il]=e2drtm_eigen(tape,f.res,1,nbc,nt,dt/dx,dx,dt,f.gx,f.gz,s,vp,vs,1,22,0,5);
+[gl,gm,il]=e2drtm_eigen(f.res,tape);
 assert(~isfile(path),'Boundary file was not removed.');
 assert(relative(u,f.u)<1e-6 && relative(w,f.w)<1e-6);
 assert(relative(gl,f.cl)<2e-4 && relative(gm,f.cm)<2e-4 && relative(il,f.illum)<1e-5);
@@ -20,28 +21,30 @@ gx=single([70.2 4.1 12.3 28.2 35.7 44.4 62.9]);
 gz=1+interp1(1:nx,terrain,double(gx),'pchip');
 gz(3)=gz(3)+1.3;
 sx=single(20.2); sz=1+interp1(1:nx,terrain,double(sx),'pchip');
-grid=fd_grid(terrain,gx,nz,nx,nbc,dx,22);
+base_dt=.5/double(max(vp(:)));
+grid=fd_grid(terrain,gx,gz,[nz,nx],nbc,dx,base_dt,1,22,'w',1);
 assert(grid.mapped && grid.dt_scale>0 && grid.dt_scale<=1);
 N=size(grid.G,2)/2;
 assert(norm(grid.G*[ones(N,1);zeros(N,1)])<1e-10);
 assert(norm(grid.G*[zeros(N,1);ones(N,1)])<1e-10);
-dt=double(grid.dt_scale)*.5/double(max(vp(:))); s=single(ricker(30,dt,nt));
-[~,w,tape]=staggerfd_eigen(1,nbc,nt,dt/dx,dx,dt,sx,sz,gx,gz,s,vp,vs,1,22,'w',0,1,grid);
+dt=grid.dt; s=single(ricker(30,dt,nt));
+[~,w,tape]=staggerfd_eigen(vp,vs,s,sx,sz,grid);
 rng(11); residual=single(randn(size(w)));
-[gl,gm,~]=e2drtm_eigen(tape,residual,1,nbc,nt,dt/dx,dx,dt,gx,gz,s,vp,vs,1,22,0,1,grid);
+[gl,gm,~]=e2drtm_eigen(residual,tape);
 permutation=[7 3 1 6 2 5 4 3];
-other=fd_grid(terrain,gx(permutation),nz,nx,nbc,dx,22);
-[~,wr]=staggerfd_eigen(1,nbc,nt,dt/dx,dx,dt,sx,sz,gx(permutation),gz(permutation),s,vp,vs,1,22,'w',0,1,other);
+other=fd_grid(terrain,gx(permutation),gz(permutation),[nz,nx],nbc,dx,base_dt,1,22,'w',1);
+[~,wr]=staggerfd_eigen(vp,vs,s,sx,sz,other);
 assert(relative(wr,w(:,permutation))<1e-6);
-[~,one]=staggerfd_eigen(1,nbc,nt,dt/dx,dx,dt,sx,sz,gx(3),gz(3),s,vp,vs,1,22,'w',0,1,grid);
+one_grid=grid;one_grid.receivers=grid.receivers(:,3);
+[~,one]=staggerfd_eigen(vp,vs,s,sx,sz,one_grid);
 assert(relative(one,w(:,3))<1e-6);
 
 % Model perturbation is internal: keep the padded material and sponge fixed.
 dv=single(smooth2a(randn(size(vs)),2,2));dv=dv/max(abs(dv(:)));
 dv(1:3,:)=0;dv(end-2:end,:)=0;dv(:,1:3)=0;dv(:,end-2:end)=0;
 analytic=sum(double((-4*vs.*gl+2*vs.*gm).*dv),'all');
-[~,wp]=staggerfd_eigen(1,nbc,nt,dt/dx,dx,dt,sx,sz,gx,gz,s,vp,vs+dv,1,22,'w',0,1,grid);
-[~,wm]=staggerfd_eigen(1,nbc,nt,dt/dx,dx,dt,sx,sz,gx,gz,s,vp,vs-dv,1,22,'w',0,1,grid);
+[~,wp]=staggerfd_eigen(vp,vs+dv,s,sx,sz,grid);
+[~,wm]=staggerfd_eigen(vp,vs-dv,s,sx,sz,grid);
 numeric=dt*sum(double(wp(:)-wm(:)).*double(residual(:)))/2;
 error=abs(numeric-analytic)/max(abs(analytic),1e-30);
 assert(error<2e-3,'Mapped-grid model derivative failed.');
@@ -65,17 +68,18 @@ for mapped=[false true]
             geom=grid; x=gx; z=gz; px=sx; pz=sz; step=dt;
         else
             x=f.gx;z=f.gz;px=single(1);pz=single(1);step=f.dt;
-            geom=fd_grid(zeros(1,nx),x,nz,nx,nbc,dx,order);
+            geom=fd_grid(zeros(1,nx),x,z,[nz,nx],nbc,dx,step,1,order,'w',5);
         end
         for type=1:5
             if mapped && type~=5, continue; end
-            [temp,ca,cl,cm,b]=fd_model(vp,vs,nbc,dx,step,1,order,0);
+            geom.source_type=types{type};geom.nt_wf=5;
+            [temp,ca,cl,cm,b]=fd_model(vp,vs,nbc,dx,step,1,order);
             [rx,rz]=fd_position(x,z,geom); [qx,qz]=fd_position(px,pz,geom);
             input=[nt,size(cm,1),size(cm,2),step/dx,numel(x),qz,qx,step,0,0,type,order,5,nz,nx,3];
             source=single(ricker(30,step,nt)); r=single(randn(nt,numel(x)));
             [errors,cl0,cm0,il0]=fd_reconstruction_check(input,temp,ca,cl,cm,cm,b,b,source,[rz;rx],geom,r);
-            [~,~,tape]=staggerfd_eigen(1,nbc,nt,step/dx,dx,step,px,pz,x,z,source,vp,vs,1,order,types{type},0,5,geom);
-            [cl1,cm1,il1]=e2drtm_eigen(tape,r,1,nbc,nt,step/dx,dx,step,x,z,source,vp,vs,1,order,0,5,geom);
+            [~,~,tape]=staggerfd_eigen(vp,vs,source,px,pz,geom);
+            [cl1,cm1,il1]=e2drtm_eigen(r,tape);
             assert(max(errors)<1e-4 && relative(cl1,cl0)<1e-3 && relative(cm1,cm0)<1e-3 && relative(il1,il0)<1e-4);
             max_error=max(max_error,max(errors));
         end
@@ -102,10 +106,10 @@ gx=single(61:2:201);sx=single(21);nt=2400;
 ratio=fzero(@(q)q^6-8*q^4+(24-16/3)*q^2-16*(1-1/3),[.8 .99]);
 for slope=[0 .3]
     terrain=1+slope*((0:nx-1)-(nx-1)/2);
-    grid=fd_grid(terrain,gx,nz,nx,nbc,1,22);
-    dt=double(.5/max(vp(:)))*grid.dt_scale;s=single(ricker(15,dt,nt));
     gz=1+interp1(1:nx,terrain,double(gx),'pchip');sz=1+interp1(1:nx,terrain,double(sx),'pchip');
-    [~,w]=staggerfd_eigen(1,nbc,nt,dt,1,dt,sx,sz,gx,gz,s,vp,vs,1,22,'w',0,5,grid);
+    grid=fd_grid(terrain,gx,gz,[nz,nx],nbc,1,double(.5/max(vp(:))),1,22,'w',5);
+    dt=grid.dt;s=single(ricker(15,dt,nt));
+    [~,w]=staggerfd_eigen(vp,vs,s,sx,sz,grid);
     expected=300*ratio/sqrt(1+slope^2);
     distance=double(gx-sx);velocity=(210:340)';t=(0:nt-1)'*dt;
     for j=1:numel(distance)
