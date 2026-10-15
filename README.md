@@ -18,20 +18,16 @@ Link to this repository: https://github.com/zhangchang271/SWD
 
    
 ## Usage
-Run `SWD.m` for the model test. It launches `SWD_distance.m`, the current physical-distance workflow. `SWD_distance.m` uses the source and receiver coordinates together with `dx` and `offset`; it does not convert the offset window through `M`, `m`, or shot-index boundary formulas.
 
-`SWD_legacy.m` preserves the former index-window implementation for comparison. `SWD_single.m` is the original single-precision example.
+Open **[SWD.m](SWD.m)** in MATLAB, edit the parameters at the top, and run it. This is the single entry point for the model example and contains the complete workflow.
 
-SWD.mlx is a MATLAB live script (similar to Jupyter) that details the intermediate steps of the SWD program. 
+Set `method = 'WD'` (default) or `method = 'SWD'` in the same script. WD uses `weight_dataAD`; SWD uses `ADWDgrad_w`.
 
-The fieldexamples folder contains two field examples, including processed dispersion curves, the main run file, and an mlx file that explains parameter selection in detail.
+`sx` and `gx` are grid coordinates; `dx` converts their difference to metres. `offset` sets the maximum source-receiver distance, and `minimum_traces` sets the minimum number of receivers on each side. Radon transforms and weighting share the selection rule in `core/offset_traces.m`.
 
+The run leaves the final model `vs`, model history `vs_all`, gradients `dk_vs_all`, misfit history `residual`, and distance windows `offsets` in the MATLAB workspace.
 
-The distance workflow switches between WD and SWD by changing one call in `SWD_distance.m`:
-- **WD method (default)**: call `weight_dataAD`, which uses physical source-receiver distances.
-- **SWD method**: uncomment the `ADWDgrad_w` call. Its Radon helpers return logical receiver masks in the original gather order.
-
-The distance-aware Radon functions are `core/RTrADx.m` and `core/RTlADx.m`. Receiver selection is shared by these functions and `core/weight_dataAD.m` through `core/offset_traces.m`.
+`fieldexamples/` contains the two field datasets and their example workflows. `SWDlive.pdf` is an explanation of the original implementation. The original scripts and executable live tutorial are available on [legacy-master](https://github.com/zhangchang271/SWD/tree/legacy-master).
 
 ## Result
 ![fig1.png](fig1.png)
