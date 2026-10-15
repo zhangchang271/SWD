@@ -14,11 +14,22 @@ Link to this repository: https://github.com/zhangchang271/SWD
 - Mid-high resolution compared to FWI.
 - No need to estiamte source wavelet.
 - The finite difference forward and inverse kernels are accelerated by C++.
-- Suitable for elastic wave and flat surface conditions.
+- Elastic waves with topography and fractional source/receiver positions.
+- Reverse-time source-wavefield reconstruction during adjoint propagation.
 
    
 ## Usage
 Run `SWD.m` directly for the model test. It is the single model-test entry point and uses the source and receiver coordinates together with `dx` and `offset`; it does not convert the offset window through `M`, `m`, or shot-index boundary formulas.
+
+Set `terrain` in the acquisition block: one surface z coordinate per model column at `x=(0:nx-1)*dx`, in the same physical units as `dx`, positive downward. `terrain=zeros(1,nx)` gives the original flat surface. Model rows follow the surface and stretch to the fixed bottom at `z=(nz-1)*dx`; model columns follow the horizontal grid deformation.
+
+Continue supplying positions through `sx/sz` and `gx/gz`, including fractional coordinates, irregular spacing, and receiver depths. Their original convention is retained: physical `(x,z)` becomes `(1+x/dx,1+z/dx)`. The default geometry places sources and receivers on `terrain`; replace these arrays directly when using surveyed positions. The grid aligns separated receivers with nearby nodes and interpolates other positions, preserving gather order. Distances used by WD/SWD remain the original horizontal offsets.
+
+The deformed grid uses the existing default `fd_order=22`, `source_type='w'`, and `isfs=1`. Its time step is adjusted internally for the grid deformation. The original uniform flat-grid stencils remain available at orders 22, 24, 26, and 28.
+
+Wavefield reconstruction is automatic. Forward propagation saves the final state and a thin boundary strip, then reconstructs the source field alongside the adjoint. Boundary records use an internal temporary file, removed after the corresponding adjoint call; full volume snapshots are no longer stored through time. `nt_wf` retains its role as the gradient accumulation interval. No reconstruction switch is needed.
+
+`SWD.m` builds its two active MEX kernels before starting parallel workers. A configured MATLAB C++ compiler and Eigen 3 headers are required (`/usr/include/eigen3`, or `core/eigen3`). These kernels are built locally because their interface now includes the fixed grid and reconstruction data.
 
 The former index-window main program, single-precision example, and live script are available on the [`legacy-master` branch](https://github.com/zhangchang271/SWD/tree/legacy-master). `SWDlive.pdf` documents the intermediate steps of the original program.
 
@@ -30,6 +41,8 @@ The distance workflow switches between WD and SWD by changing one call in `SWD.m
 - **SWD method**: uncomment the `ADWDgrad_w` call. Its Radon helpers return logical receiver masks in the original gather order.
 
 The distance-aware Radon functions are `core/RTrADx.m` and `core/RTlADx.m`. Receiver selection is shared by these functions and `core/weight_dataAD.m` through `core/offset_traces.m`.
+
+Run `addpath('tests'); test_fd` from the repository root to check the original flat-grid reference, irregular receiver sampling, a mapped-grid model derivative, reconstruction against full wavefield storage, and analytical Rayleigh-wave speeds on horizontal and inclined surfaces. Test compilation and full trajectories are confined to temporary storage.
 
 ## Result
 ![fig1.png](fig1.png)

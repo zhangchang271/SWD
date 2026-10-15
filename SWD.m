@@ -38,7 +38,7 @@
 % 2. No need to estiamte source wavelet.
 % 3. Accelerated by C++: The finite difference forward and inverse kernels used
 %    in SWD are accelerated using C++.
-% 4. Suitable for elastic wave and flat surface conditions.
+% 4. Supports elastic waves with topography and flexible receiver positions.
 %
 %
 % Usage:
@@ -86,17 +86,17 @@ vp=vs*1.732;  % vp is constant
 fr=30;
 dx=1;%dx=(vsmin/fr/12);
 dt=dx/vpmax*0.5;
-dtx=dt/dx;
 pickMethod=1;  %1==FDC 2==argmax
-nt_wf=5;  % Storage wave field interval
-nt=floor((nx*dx/vsmin/dt+1000)/10)*10-500;  % time step; Must be divisible by nt_wf
-[s,nw]=ricker(fr,dt,nt); s =single(s); % source wavelet
+nt_wf=5;  % Gradient accumulation interval (wavefields are reconstructed)
 nbc=40;   % boundary layer
 % define acquisition geometry
 source_step=6;
 receiver_step=2;
-sx=single(1:source_step:nx); sz=zeros(size(sx),'single')+1; [~,ns]=size(sx);
-gx=single(1:receiver_step:nx); gz=zeros(size(gx),'single')+1; ng=numel(gx);
+terrain=zeros(1,nx); % Surface z in physical units, positive down; x=(0:nx-1)*dx
+sx=single(1:source_step:nx);
+sz=single(1+interp1(1:nx,terrain,double(sx),'pchip')/dx); ns=numel(sx);
+gx=single(1:receiver_step:nx);
+gz=single(1+interp1(1:nx,terrain,double(gx),'pchip')/dx); ng=numel(gx);
 % Set papramters
 pur=-0.05;   % no need to change
 offset=90;   % maximum source-receiver distance in physical units
@@ -105,6 +105,11 @@ offset_step=6;
 parameter_type=0;  % no need to change
 fd_order=22; source_type='w';  % no need to change
 isfs=1;  % no need to change
+grid=fd_grid(terrain,gx,nz,nx,nbc,dx,fd_order);
+dt=dt*grid.dt_scale; dtx=dt/dx;
+nt=floor((nx*dx/vsmin/dt+1000)/10)*10-500;
+[s,nw]=ricker(fr,dt,nt); s=single(s);
+build_mex;
 vmin=floor(vsmin/2);  % min phase-velocity of RT
 vmax=floor(vsmax*1.2); % max phase-velocity of RT
 np=vmax-vmin+1;  % no need to change
@@ -137,7 +142,7 @@ for i =1:npair
 end
 
 parfor is=1:ns
-    [~,seismo_v_d(:,:,is)]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs_d,isfs,fd_order,source_type,parameter_type,nt_wf);
+    [~,seismo_v_d(:,:,is)]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs_d,isfs,fd_order,source_type,parameter_type,nt_wf,grid);
 end
 imagesc(seismo_v_d(:,:,1))
 
@@ -170,7 +175,7 @@ g_illum=zeros(nz,nx);
 
 
 parfor is=1:ns
-    [~,seismo_v,wavefield_gradient]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs,isfs,fd_order,source_type,parameter_type,nt_wf);
+    [~,seismo_v,wavefield_gradient]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs,isfs,fd_order,source_type,parameter_type,nt_wf,grid);
     [mlr,saveForBackwardr]=RTrADx(seismo_v,df,dt,dx,np,vmin,vmax,fmin,fmax,offset,gx,sx(is)); % Cal. the predicetd data dispersion curve for two sides
     [res_r(is),cr_pre_r(:,is)] = LHDispPick(mlr,vmin,cr_0(:,is),pickMethod,ini);
     saveForBackwardr.cr_r = cr_pre_r(:,is)-vmin;
@@ -184,7 +189,7 @@ parfor is=1:ns
     cr_0(:,is),cr_0l(:,is),cr_pre_r(:,is),cr_pre_l(:,is));% Uncomment there two lines to enable the WD method
 %     [seismo_v_d1]=ADWDgrad_w(nt,ng,npair,minimum_traces,SoftArgNorm,grad_outputr,grad_outputl,space_M,saveForBackwardr,saveForBackwardl);% Uncomment this line to enable the SWD method
     % [seismo_v_d1,res_r]=FWIresidual(seismo_v,seismo_v_d(:,:,is));
-    [cl_img,cm_img,illum_div]=e2drtm_eigen(wavefield_gradient,single(seismo_v_d1),is,nbc,nt,dtx,dx,dt,gx,gz,s,vp,vs,isfs,fd_order,parameter_type,nt_wf);
+    [cl_img,cm_img,illum_div]=e2drtm_eigen(wavefield_gradient,single(seismo_v_d1),is,nbc,nt,dtx,dx,dt,gx,gz,s,vp,vs,isfs,fd_order,parameter_type,nt_wf,grid);
     g_cl = g_cl+cl_img;g_cm = g_cm+cm_img;g_illum = g_illum+illum_div;
 end
 
@@ -208,7 +213,7 @@ vs1(vs1<vsmin)=vsmin;vs1(vs1>vsmax)=vsmax;
 %%
 
 parfor is=1:ns
-    [~,seismo_v,~]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf);
+    [~,seismo_v]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf,grid);
     [mlr,~]=RTrADx(seismo_v,df,dt,dx,np,vmin,vmax,fmin,fmax,offset,gx,sx(is)); % Cal. the predicetd data dispersion curve for two sides
     [res_r(is),cr_pre_r(:,is)] = LHDispPick(mlr,vmin,cr_0(:,is),pickMethod,ini);
     [mll,~]=RTlADx(seismo_v,df,dt,dx,np,vmin,vmax,fmin,fmax,offset,gx,sx(is));
@@ -229,7 +234,7 @@ if res1>res0
 
 
         parfor is=1:ns
-            [~,seismo_v,~]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf);
+            [~,seismo_v]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf,grid);
             [mlr,~]=RTrADx(seismo_v,df,dt,dx,np,vmin,vmax,fmin,fmax,offset,gx,sx(is)); % Cal. the predicetd data dispersion curve for two sides
             [res_r(is),cr_pre_r(:,is)] = LHDispPick(mlr,vmin,cr_0(:,is),pickMethod,ini);
             [mll,~]=RTlADx(seismo_v,df,dt,dx,np,vmin,vmax,fmin,fmax,offset,gx,sx(is));
@@ -247,7 +252,7 @@ else
     %%
 
     parfor is=1:ns
-        [~,seismo_v,~]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf);
+        [~,seismo_v]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf,grid);
         [mlr,~]=RTrADx(seismo_v,df,dt,dx,np,vmin,vmax,fmin,fmax,offset,gx,sx(is)); % Cal. the predicetd data dispersion curve for two sides
         [res_r(is),cr_pre_r(:,is)] = LHDispPick(mlr,vmin,cr_0(:,is),pickMethod,ini);
         [mll,~]=RTlADx(seismo_v,df,dt,dx,np,vmin,vmax,fmin,fmax,offset,gx,sx(is));
@@ -270,7 +275,7 @@ vs1(vs1<vsmin)=vsmin;vs1(vs1>vsmax)=vsmax;
 %%
 
 parfor is=1:ns
-    [~,seismo_v,~]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf);
+    [~,seismo_v]=staggerfd_eigen(is,nbc,nt,dtx,dx,dt,sx(is),sz(is),gx,gz,s,vp,vs1,isfs,fd_order,source_type,parameter_type,nt_wf,grid);
     [mlr,~]=RTrADx(seismo_v,df,dt,dx,np,vmin,vmax,fmin,fmax,offset,gx,sx(is)); % Cal. the predicetd data dispersion curve for two sides
     [res_r(is),cr_pre_r(:,is)] = LHDispPick(mlr,vmin,cr_0(:,is),pickMethod,ini);
     [mll,~]=RTlADx(seismo_v,df,dt,dx,np,vmin,vmax,fmin,fmax,offset,gx,sx(is));

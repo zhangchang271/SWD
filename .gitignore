@@ -1,0 +1,3 @@
+# The active kernels are compiled locally by core/build_mex.m.
+/core/eigen_staggerfd_single.mex*
+/core/eigen_e2drtm_single.mex*
