@@ -19,9 +19,11 @@ Link to this repository: https://github.com/zhangchang271/SWD
 
    
 ## Usage
-Run `SWD.m` directly for the model test. It is the single model-test entry point and uses the source and receiver coordinates together with `dx` and `offset`; it does not convert the offset window through `M`, `m`, or shot-index boundary formulas.
+Run `SWD.m` directly for the flat-surface model test, or `SWD_Topo.m` for the terrain model test. Both are direct scripts and use the source and receiver coordinates together with `dx` and `offset`; they do not convert the offset window through `M`, `m`, or shot-index boundary formulas.
 
-Set `terrain` in the acquisition block: one surface z coordinate per model column at `x=(0:nx-1)*dx`, in the same physical units as `dx`, positive downward. `terrain=zeros(1,nx)` gives the original flat surface. Model rows follow the surface and stretch to the fixed bottom at `z=(nz-1)*dx`; model columns follow the horizontal grid deformation.
+`SWD_Topo.m` reads `vs_d`, `terrain`, and `dx` from `model/model8_2_topo.mat`. This 36-by-180 model follows the original shallow-interface trend at 85% of its relief, with about 10.2 m of surface height difference. The original velocity model is resampled at the terrain-following nodes in physical coordinates; above the original flat surface, the shallowest material is extended into the hill. Sources and receivers lie on the surface. The script displays the true, initial, and inverted models in physical coordinates and retains the inversion parameters and calculations from `SWD.m`.
+
+In `SWD.m`, set `terrain` in the acquisition block: one surface z coordinate per model column at `x=(0:nx-1)*dx`, in the same physical units as `dx`, positive downward. `terrain=zeros(1,nx)` gives the original flat surface. Model rows follow the surface and stretch to the fixed bottom at `z=(nz-1)*dx`; model columns follow the horizontal grid deformation.
 
 Continue supplying positions through `sx/sz` and `gx/gz`, including fractional coordinates, irregular spacing, and receiver depths. Their original convention is retained: physical `(x,z)` becomes `(1+x/dx,1+z/dx)`. The default geometry places sources and receivers on `terrain`; replace these arrays directly when using surveyed positions. The grid aligns separated receivers with nearby nodes and interpolates other positions, preserving gather order. Distances used by WD/SWD remain the original horizontal offsets.
 
