@@ -18,16 +18,14 @@ Link to this repository: https://github.com/zhangchang271/SWD
 
    
 ## Usage
-Run `SWD.m` for the model test. It launches `SWD_distance.m`, the current physical-distance workflow. `SWD_distance.m` uses the source and receiver coordinates together with `dx` and `offset`; it does not convert the offset window through `M`, `m`, or shot-index boundary formulas.
+Run `SWD.m` directly for the model test. It is the single model-test entry point and uses the source and receiver coordinates together with `dx` and `offset`; it does not convert the offset window through `M`, `m`, or shot-index boundary formulas.
 
-`SWD_legacy.m` preserves the former index-window implementation for comparison. `SWD_single.m` is the original single-precision example.
-
-SWD.mlx is a MATLAB live script (similar to Jupyter) that details the intermediate steps of the SWD program. 
+The former index-window main program, single-precision example, and live script are available on the [`legacy-master` branch](https://github.com/zhangchang271/SWD/tree/legacy-master). `SWDlive.pdf` documents the intermediate steps of the original program.
 
 The fieldexamples folder contains two field examples, including processed dispersion curves, the main run file, and an mlx file that explains parameter selection in detail.
 
 
-The distance workflow switches between WD and SWD by changing one call in `SWD_distance.m`:
+The distance workflow switches between WD and SWD by changing one call in `SWD.m`:
 - **WD method (default)**: call `weight_dataAD`, which uses physical source-receiver distances.
 - **SWD method**: uncomment the `ADWDgrad_w` call. Its Radon helpers return logical receiver masks in the original gather order.
 
